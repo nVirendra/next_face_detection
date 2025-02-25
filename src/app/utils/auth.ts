@@ -1,19 +1,18 @@
-// utils/auth.ts
-import jwt from 'jsonwebtoken';
-import { jwtVerify } from "jose";
+import { SignJWT, jwtVerify } from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
+const secretKey = new TextEncoder().encode(JWT_SECRET); // Convert secret to Uint8Array
 
-// Generate token with user information
-export const generateToken = (userId: string, email: string) => {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '1d' });
+// Generate JWT
+export const generateToken = async (userId: string, email: string) => {
+  return await new SignJWT({ userId, email })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('1d')
+    .sign(secretKey);
 };
 
-// Verify token
-// export const verifyToken = (token: string) => {
-//   return jwt.verify(token, JWT_SECRET);
-// };
+// Verify JWT
 export const verifyToken = async (token: string) => {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-  return await jwtVerify(token, secret);
+  const { payload } = await jwtVerify(token, secretKey);
+  return payload; // Returns decoded token data
 };
